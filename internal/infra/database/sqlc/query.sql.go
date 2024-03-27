@@ -10,32 +10,55 @@ import (
 	"database/sql"
 )
 
-const createProduct = `-- name: CreateProduct :one
-insert into products (id, name, description,created_at)
-values (?,?,?,?)
-returning id, name, description, product_type_id, created_at
+const createProduct = `-- name: CreateProduct :exec
+insert into products (id, name, description,created_at,product_type_id)
+values (?,?,?,?,?)
 `
 
 type CreateProductParams struct {
+	ID            string
+	Name          string
+	Description   string
+	CreatedAt     sql.NullTime
+	ProductTypeID sql.NullString
+}
+
+func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) error {
+	_, err := q.db.ExecContext(ctx, createProduct,
+		arg.ID,
+		arg.Name,
+		arg.Description,
+		arg.CreatedAt,
+		arg.ProductTypeID,
+	)
+	return err
+}
+
+const createProductType = `-- name: CreateProductType :one
+insert into product_types (id, name, description,created_at)
+values (?,?,?,?)
+returning id, name, description, created_at
+`
+
+type CreateProductTypeParams struct {
 	ID          string
 	Name        string
 	Description string
 	CreatedAt   sql.NullTime
 }
 
-func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error) {
-	row := q.db.QueryRowContext(ctx, createProduct,
+func (q *Queries) CreateProductType(ctx context.Context, arg CreateProductTypeParams) (ProductType, error) {
+	row := q.db.QueryRowContext(ctx, createProductType,
 		arg.ID,
 		arg.Name,
 		arg.Description,
 		arg.CreatedAt,
 	)
-	var i Product
+	var i ProductType
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
 		&i.Description,
-		&i.ProductTypeID,
 		&i.CreatedAt,
 	)
 	return i, err
@@ -49,6 +72,83 @@ where id = ?
 func (q *Queries) DeleteProduct(ctx context.Context, id string) error {
 	_, err := q.db.ExecContext(ctx, deleteProduct, id)
 	return err
+}
+
+const deleteProductType = `-- name: DeleteProductType :exec
+delete from product_types
+where id = ?
+`
+
+func (q *Queries) DeleteProductType(ctx context.Context, id string) error {
+	_, err := q.db.ExecContext(ctx, deleteProductType, id)
+	return err
+}
+
+const getProduct = `-- name: GetProduct :one
+select id, name, description, product_type_id, created_at from products
+where id = ?
+`
+
+func (q *Queries) GetProduct(ctx context.Context, id string) (Product, error) {
+	row := q.db.QueryRowContext(ctx, getProduct, id)
+	var i Product
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.ProductTypeID,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getProductType = `-- name: GetProductType :one
+select id, name, description, created_at from product_types
+where id = ?
+`
+
+func (q *Queries) GetProductType(ctx context.Context, id string) (ProductType, error) {
+	row := q.db.QueryRowContext(ctx, getProductType, id)
+	var i ProductType
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getProductTypes = `-- name: GetProductTypes :many
+select id, name, description, created_at from product_types
+`
+
+func (q *Queries) GetProductTypes(ctx context.Context) ([]ProductType, error) {
+	rows, err := q.db.QueryContext(ctx, getProductTypes)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ProductType
+	for rows.Next() {
+		var i ProductType
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getProducts = `-- name: GetProducts :many
@@ -82,4 +182,78 @@ func (q *Queries) GetProducts(ctx context.Context) ([]Product, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const getProductsByProductType = `-- name: GetProductsByProductType :many
+select id, name, description, product_type_id, created_at from products
+where product_type_id = ?
+`
+
+func (q *Queries) GetProductsByProductType(ctx context.Context, productTypeID sql.NullString) ([]Product, error) {
+	rows, err := q.db.QueryContext(ctx, getProductsByProductType, productTypeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Product
+	for rows.Next() {
+		var i Product
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.ProductTypeID,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateProduct = `-- name: UpdateProduct :exec
+update products
+set name = ?, description = ?, product_type_id = ?
+where id = ?
+`
+
+type UpdateProductParams struct {
+	Name          string
+	Description   string
+	ProductTypeID sql.NullString
+	ID            string
+}
+
+func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) error {
+	_, err := q.db.ExecContext(ctx, updateProduct,
+		arg.Name,
+		arg.Description,
+		arg.ProductTypeID,
+		arg.ID,
+	)
+	return err
+}
+
+const updateProductType = `-- name: UpdateProductType :exec
+update product_types
+set name = ?, description = ?
+where id = ?
+`
+
+type UpdateProductTypeParams struct {
+	Name        string
+	Description string
+	ID          string
+}
+
+func (q *Queries) UpdateProductType(ctx context.Context, arg UpdateProductTypeParams) error {
+	_, err := q.db.ExecContext(ctx, updateProductType, arg.Name, arg.Description, arg.ID)
+	return err
 }

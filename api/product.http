@@ -1,0 +1,13 @@
+POST http://localhost:7070/products HTTP/1.1
+Content-Type: application/json
+
+{
+    "name":"Product 12",
+    "description": "ProductDescription 12",
+    "product_type_id": "ugiogilughkçlhiulkgjlçl;khn~lk;"
+}
+
+###
+
+GET http://localhost:7070/products HTTP/1.1
+Content-Type: application/json

@@ -11,6 +11,7 @@ import (
 var (
 	ErrDescriptionIsRequired = errors.New("description is required")
 	ErrNameIsRequired        = errors.New("name is required")
+	ErrProductTypeIsRequired = errors.New("product type is required")
 )
 
 type Product struct {
@@ -18,14 +19,16 @@ type Product struct {
 	Name        string
 	Description string
 	CreatedAt   sql.NullTime
+	ProductType
 }
 
-func NewProduct(name, description string) (*Product, error) {
+func NewProduct(name, description string, productType ProductType) (*Product, error) {
 	p := &Product{
 		ID:          uuid.New(),
 		Name:        name,
 		Description: description,
 		CreatedAt:   sql.NullTime{Time: time.Now(), Valid: true},
+		ProductType: productType,
 	}
 	return p, p.Valid()
 }
@@ -37,6 +40,9 @@ func (p *Product) Valid() error {
 	}
 	if p.Description == "" {
 		return ErrDescriptionIsRequired
+	}
+	if p.ProductType.ID.String() == "" {
+		return ErrProductTypeIsRequired
 	}
 
 	return nil

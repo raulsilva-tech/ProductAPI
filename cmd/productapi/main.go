@@ -1,36 +1,42 @@
 package main
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
 
-	_ "github.com/mattn/go-sqlite3"
+	"github.com/gin-gonic/gin"
+	// _ "github.com/lib/pq"
+	_ "github.com/go-sql-driver/mysql"
+	// _ "github.com/mattn/go-sqlite3"
+	"github.com/raulsilva-tech/ProductAPI/configs"
 	"github.com/raulsilva-tech/ProductAPI/internal/infra/database"
-	"github.com/raulsilva-tech/ProductAPI/internal/usecase"
+	"github.com/raulsilva-tech/ProductAPI/internal/infra/webserver/handler"
 )
 
 func main() {
 
-	ctx := context.Background()
+	//load configuration
+	cfg, _ := configs.LoadConfig(".")
 
-	//creating connection with database
-	db, err := sql.Open("sqlite3", "./productapi.db")
+	//starting database connection
+	DataSourceName := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", cfg.DBUser, cfg.DBPassword, cfg.DBHost, cfg.DBPort, cfg.DBName)
+	fmt.Println(DataSourceName)
+
+	db, err := sql.Open(cfg.DBDriver, DataSourceName)
 	if err != nil {
 		panic(err)
 	}
-	defer db.Close()
 
 	repo := database.NewProductRepository(db)
-	uc := usecase.NewCreateProductUseCase(repo)
 
-	output, err := uc.Execute(ctx, usecase.CreateProductInputDTO{
-		Name:        "Product4",
-		Description: "product4desc",
-	})
-	if err != nil {
-		panic(err)
-	}
+	pHandler := handler.NewProductHandler(repo)
 
-	fmt.Println(output)
+	//webserver
+	router := gin.Default()
+
+	pGroup := router.Group("/products")
+	pGroup.POST("/", pHandler.Create)
+	pGroup.GET("/", pHandler.List)
+
+	router.Run(":" + cfg.WebServerPort)
 }

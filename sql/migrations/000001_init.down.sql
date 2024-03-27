@@ -1,2 +1,2 @@
-DROP TABLE products if exists;
-DROP TABLE product_types if exists;
+DROP TABLE if exists products;
+DROP TABLE if exists product_types ;

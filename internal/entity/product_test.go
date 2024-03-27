@@ -8,8 +8,12 @@ import (
 
 func TestNewProduct(t *testing.T) {
 	//AAA
-	//arrange and act
-	p, err := NewProduct("Product 1", "Desc 1")
+	//arrange
+	pt, err := NewProductType("type 1", "type description")
+	assert.Nil(t, err)
+
+	//act
+	p, err := NewProduct("Product 1", "Desc 1", *pt)
 
 	//assert
 	assert.Nil(t, err)
@@ -19,8 +23,12 @@ func TestNewProduct(t *testing.T) {
 
 func TestWhenNameIsRequired(t *testing.T) {
 	//AAA
-	//arrange and act
-	_, err := NewProduct("", "Desc 1")
+	//arrange
+	pt, err := NewProductType("type 1", "type description")
+	assert.Nil(t, err)
+
+	//act
+	_, err = NewProduct("", "Desc 1", *pt)
 
 	//assert
 	assert.NotNil(t, err)
@@ -29,8 +37,12 @@ func TestWhenNameIsRequired(t *testing.T) {
 
 func TestWhenDescriptionIsRequired(t *testing.T) {
 	//AAA
-	//arrange and act
-	_, err := NewProduct("Product 1", "")
+	//arrange
+	pt, err := NewProductType("type 1", "type description")
+	assert.Nil(t, err)
+
+	//act
+	_, err = NewProduct("Product 1", "", *pt)
 
 	//assert
 	assert.NotNil(t, err)
