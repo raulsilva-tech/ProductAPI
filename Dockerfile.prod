@@ -2,10 +2,10 @@ FROM golang:latest as builder
 WORKDIR /app
 # copying all files 
 COPY . .
-RUN GOOS=linux CGO_ENABLED=0 go build -ldflags="-w -s" -o server cmd/productapi/main.go
+RUN GOOS=linux CGO_ENABLED=0 go build -ldflags="-w -s" -o productapi cmd/productapi/main.go
 
 
 FROM scratch
-COPY --from=builder /app/server .
+COPY --from=builder /app/productapi .
 COPY --from=builder /app/cmd/productapi/config.env .
-CMD ["./server"]
+CMD ["./productapi"]
