@@ -37,6 +37,9 @@ func main() {
 	pGroup := router.Group("/products")
 	pGroup.POST("/", pHandler.Create)
 	pGroup.GET("/", pHandler.List)
+	pGroup.POST("/:id", pHandler.Update)
+	pGroup.DELETE("/:id", pHandler.Delete)
+	pGroup.GET("/:id", pHandler.GetById)
 
 	router.Run(":" + cfg.WebServerPort)
 }

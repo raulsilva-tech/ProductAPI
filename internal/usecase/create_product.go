@@ -16,11 +16,11 @@ type CreateProductInputDTO struct {
 }
 
 type CreateProductOutputDTO struct {
-	ID          string             `json:"id"`
-	Name        string             `json:"name"`
-	Description string             `json:"description"`
-	CreatedAt   sql.NullTime       `json:"created_at"`
-	ProductType entity.ProductType `json:"product_type"`
+	ID            string       `json:"id"`
+	Name          string       `json:"name"`
+	Description   string       `json:"description"`
+	CreatedAt     sql.NullTime `json:"created_at"`
+	ProductTypeId string       `json:"product_type_id"`
 }
 
 type CreateProductUseCase struct {
@@ -58,10 +58,10 @@ func (u *CreateProductUseCase) Execute(ctx context.Context, input CreateProductI
 	}
 
 	return CreateProductOutputDTO{
-		ID:          record.ID.String(),
-		Name:        record.Name,
-		Description: record.Description,
-		CreatedAt:   record.CreatedAt,
-		ProductType: record.ProductType,
+		ID:            record.ID.String(),
+		Name:          record.Name,
+		Description:   record.Description,
+		CreatedAt:     record.CreatedAt,
+		ProductTypeId: record.ProductType.ID.String(),
 	}, nil
 }

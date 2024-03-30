@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/raulsilva-tech/ProductAPI/internal/entity"
@@ -87,4 +88,57 @@ func (r *ProductRepository) List(ctx context.Context) ([]entity.Product, error) 
 	}
 
 	return products, nil
+}
+
+func (r *ProductRepository) Update(ctx context.Context, product *entity.Product) error {
+
+	_, err := r.Queries.GetProduct(ctx, product.ID.String())
+	if err != nil {
+		return err
+	}
+	return r.Queries.UpdateProduct(ctx, sqlc.UpdateProductParams{
+		ID:            product.ID.String(),
+		Name:          product.Name,
+		Description:   product.Description,
+		ProductTypeID: sql.NullString{String: product.ProductType.ID.String(), Valid: false},
+	})
+
+}
+
+func (r *ProductRepository) Delete(ctx context.Context, id string) error {
+
+	_, err := r.Queries.GetProduct(ctx, id)
+	if err != nil {
+		return err
+	}
+	err = r.Queries.DeleteProduct(ctx, id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *ProductRepository) GetById(ctx context.Context, id string) (entity.Product, error) {
+
+	sqlcProduct, err := r.Queries.GetProduct(ctx, id)
+	if err != nil {
+		return entity.Product{}, err
+	}
+
+	ptUUID := uuid.Nil
+	if sqlcProduct.ProductTypeID.String != "" {
+		ptUUID, err = uuid.Parse(sqlcProduct.ProductTypeID.String)
+		if err != nil {
+			return entity.Product{}, fmt.Errorf("invalid product type id. Error: %v", err.Error())
+		}
+	}
+	return entity.Product{
+		ID:          uuid.MustParse(sqlcProduct.ID),
+		Name:        sqlcProduct.Name,
+		Description: sqlcProduct.Description,
+		CreatedAt:   sqlcProduct.CreatedAt,
+		ProductType: entity.ProductType{
+			ID: ptUUID,
+		},
+	}, nil
 }
